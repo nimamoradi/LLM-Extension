@@ -24,6 +24,6 @@ def test_follow_up_conversation():
     print(response)
     response = ollama.follow_up(id, 'what was my name?')
     assert response is not None
-    assert response != ''
+    assert 'John' in response
     print(response)
 

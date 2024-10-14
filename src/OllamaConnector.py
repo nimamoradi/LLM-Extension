@@ -9,7 +9,7 @@ class OllamaConnector:
         self.modelName = 'llama3:latest'
         self.conversation_history = []
 
-    def start_conversation(self, message: str):
+    def start_conversation(self, message: str, track=True):
         id = self._create_id()
         # add to conversation history
         self.conversation_history.append({
@@ -22,6 +22,8 @@ class OllamaConnector:
             'role': 'user',
             'content': message,
         }, ], id)
+        if not track:
+            self.clear_conversation(id)
         return response['message']['content'], id
 
     def _chat(self, messages: list, id: str):
@@ -64,7 +66,7 @@ class OllamaConnector:
 
     # remove a specific conversation from memory
     def clear_conversation(self, id: str):
-        self.conversation_history = [message for message in self.conversation_history if message.id != id]
+        self.conversation_history = [message for message in self.conversation_history if message['id'] != id]
 
     def _create_id(self):
         return str(uuid.uuid4())

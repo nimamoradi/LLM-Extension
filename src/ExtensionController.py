@@ -1,19 +1,27 @@
-import ExtensionBase
-
 
 class ExtensionController:
-    def __init__(self):
+    def __init__(self, ollama_connector):
         self.extensions = []
-    
-    def add_extension(self, extension: ExtensionBase):
+        self.ollama = ollama_connector  # OllamaConnector instance
+
+    def add_extension(self, extension):
         self.extensions.append(extension)
 
-    def handle_query(self, query: str) -> str:
+    def handle_query(self, query: str, conversation_id: str = None) -> str:
+        # Check extensions first
         for extension in self.extensions:
             if extension.matches(query):
-                return extension.execute(query)
-        return self.fallback_response(query)
+                response = extension.execute(query)
+                # If there's no conversation ID, start a new conversation using extension response
+                if conversation_id is None:
+                    response, conversation_id = self.ollama.start_conversation(response)
+                else:
+                    response = self.ollama.follow_up(conversation_id, response)
+                return response, conversation_id
 
-    def fallback_response(self, query: str) -> str:
-        # Fallback response if no extension matches the query
-        return "I'm sorry, I don't understand your request."
+        # If no extension matches, use the LLM directly
+        if conversation_id:
+            return self.ollama.follow_up(conversation_id, query)
+        else:
+            response, conversation_id = self.ollama.start_conversation(query)
+            return response, conversation_id
